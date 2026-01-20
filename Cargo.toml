@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.100"
 bevy = "0.18.0"
+bevy_common_assets = { version = "0.15.0", features = ["ron"] }
 bevy_procedural_tilemaps = "0.2.0"
+serde = { version = "1.0.228", features = ["derive"] }
