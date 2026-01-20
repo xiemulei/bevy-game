@@ -23,6 +23,7 @@ const TILE_SIZE: u32 = 64; // 每个精灵块的大小为 64x64 像素
 const WALK_FRAMES: usize = 9; // 每个行走方向有 9 帧动画
 const MOVE_SPEED: f32 = 140.0; // 移动速度（像素/秒）
 const ANIM_DT: f32 = 0.1; // 动画帧间隔时间（秒，约 10 FPS）
+const PLAYER_Z: f32 = 20.0;
 
 /// 玩家实体组件标记
 #[derive(Component)]
@@ -98,7 +99,7 @@ fn spawn_player(
             },
         ),
         // 变换组件：设置初始位置为原点
-        Transform::from_translation(Vec3::ZERO),
+        Transform::from_translation(Vec3::new(0., 0., PLAYER_Z)).with_scale(Vec3::splat(0.8)),
         // 玩家标记组件
         Player,
         // 动画状态组件
