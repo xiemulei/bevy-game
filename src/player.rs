@@ -193,45 +193,42 @@ fn animate_player(
         None => return,
     };
 
-    // 计算目标行（根据朝向）
-    let target_row = row_zero_based(anim.facing);
-
-    // 计算当前帧的列和行坐标
-    let mut current_col = atlas.index % WALK_FRAMES; // 当前列
-    let mut current_row = atlas.index / WALK_FRAMES; // 当前行
-
-    // 如果玩家朝向发生变化，切换到对应方向的第一个图片
-    if current_row != target_row {
-        atlas.index = row_start_index(anim.facing); // 切换到新朝向的第一帧
-        current_col = 0;
-        current_row = target_row;
-        timer.reset(); // 重置动画计时器
-    }
-
     // 检测移动状态变化
     let just_started = anim.moving && !anim.was_moving; // 刚开始移动
     let just_stopped = !anim.moving && anim.was_moving; // 刚停止移动
 
+    // 处理停止移动
+    if just_stopped {
+        timer.reset();
+    }
+
+    // 预计算当前朝向的起始索引，避免重复计算
+    let row_start = row_start_index(anim.facing);
+    let target_row = row_zero_based(anim.facing);
+    let current_row = atlas.index / WALK_FRAMES;
+
+    // 如果朝向发生变化，切换到新朝向的第一帧
+    if current_row != target_row {
+        atlas.index = row_start;
+        timer.reset();
+    }
+
     // 处理移动中的动画
     if anim.moving {
+        // 计算下一帧的列索引
+        let current_col = atlas.index % WALK_FRAMES;
+        let next_col = (current_col + 1) % WALK_FRAMES;
+
         if just_started {
             // 刚开始移动：立即切换到下一帧
-            let row_start = row_start_index(anim.facing);
-            let next_col = (current_col + 1) % WALK_FRAMES;
             atlas.index = row_start + next_col;
-            timer.reset();
         } else {
             // 持续移动：根据计时器更新帧
             timer.tick(time.delta());
             if timer.just_finished() {
-                let row_start = row_start_index(anim.facing);
-                let next_col = (current_col + 1) % WALK_FRAMES; // 循环到下一帧
                 atlas.index = row_start + next_col;
             }
         }
-    } else if just_stopped {
-        // 刚停止移动：重置计时器
-        timer.reset();
     }
 
     // 更新上一帧的移动状态
