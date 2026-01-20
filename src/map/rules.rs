@@ -188,7 +188,7 @@ fn build_yellow_grass_layer(
             x_pos: terrain_sockets.void,
             x_neg: terrain_sockets.void,
             z_pos: terrain_sockets.yellow_grass.layer_up,
-            z_neg: terrain_sockets.yellow_grass.layer_up,
+            z_neg: terrain_sockets.yellow_grass.layer_down,
             y_pos: terrain_sockets.void,
             y_neg: terrain_sockets.void,
         },
