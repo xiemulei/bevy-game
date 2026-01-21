@@ -1,11 +1,15 @@
 use crate::characters::config::CharactersList;
+use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 
-mod animation;
-mod config;
-mod movement;
-mod spawn;
+pub mod animation;
+pub mod config;
+pub mod facing;
+pub mod input;
+pub mod physics;
+pub mod spawn;
+pub mod state;
 
 /// 角色系统插件
 ///
@@ -24,19 +28,16 @@ impl Plugin for CharactersPlugin {
             .add_systems(
                 Update,
                 (
-                    // 初始化玩家角色的精灵和动画控制器
-                    spawn::initialize_player_character,
+                    input::handle_player_input,
                     // 切换角色（按数字键 1-9）
                     spawn::switch_character,
-                    // 处理玩家移动
-                    movement::move_player,
-                    // 更新跳跃状态
-                    movement::update_jump_state,
-                    // 播放角色动画
-                    animation::animate_characters,
-                    // 更新动画状态标志
-                    animation::update_animation_flags,
-                ),
+                    input::update_jump_state,
+                    animation::on_state_change_update_animation,
+                    physics::apply_velocity,
+                    animation::animations_playback,
+                )
+                    .chain()
+                    .run_if(in_state(GameState::Playing)),
             );
     }
 }

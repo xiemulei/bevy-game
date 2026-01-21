@@ -5,9 +5,10 @@ use std::collections::HashMap;
 /// 动画类型枚举
 ///
 /// 定义角色可以执行的不同动画类型
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Default)]
 pub enum AnimationType {
     /// 行走动画
+    #[default]
     Walk,
     /// 奔跑动画
     Run,

@@ -1,8 +1,11 @@
 use crate::characters::animation::{
-    AnimationController, AnimationState, AnimationTimer, DEFAULT_ANIMATION_FRAME_TIME,
+    AnimationController, AnimationTimer, DEFAULT_ANIMATION_FRAME_TIME,
 };
 use crate::characters::config::{CharacterEntry, CharactersList};
-use crate::characters::movement::Player;
+use crate::characters::facing::Facing;
+use crate::characters::input::Player;
+use crate::characters::physics::Velocity;
+use crate::characters::state::CharacterState;
 use bevy::prelude::*;
 
 /// 玩家缩放比例
@@ -122,7 +125,9 @@ pub fn initialize_player_character(
         // 为玩家实体添加动画和角色组件
         commands.entity(entity).insert((
             AnimationController::default(),
-            AnimationState::default(),
+            CharacterState::default(),
+            Velocity::default(),
+            Facing::default(),
             AnimationTimer(Timer::from_seconds(
                 DEFAULT_ANIMATION_FRAME_TIME,
                 TimerMode::Repeating,

@@ -1,90 +1,31 @@
 use crate::characters::config::{AnimationType, CharacterEntry};
+use crate::characters::facing::Facing;
+use crate::characters::state::CharacterState;
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 /// 默认动画帧时间（秒）
 pub const DEFAULT_ANIMATION_FRAME_TIME: f32 = 0.1;
 
-/// 角色朝向枚举
-///
-/// 定义角色在 2D 平面上的四个朝向
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Facing {
-    /// 上
-    Up,
-    /// 左
-    Left,
-    /// 下
-    Down,
-    /// 右
-    Right,
-}
-
-impl Facing {
-    /// 根据移动方向向量确定角色朝向
-    ///
-    /// 比较水平和垂直分量的大小，选择较大的一侧作为朝向
-    pub fn from_direction(direction: Vec2) -> Self {
-        if direction.x.abs() > direction.y.abs() {
-            if direction.x > 0.0 {
-                Facing::Right
-            } else {
-                Facing::Left
-            }
-        } else {
-            if direction.y > 0.0 {
-                Facing::Up
-            } else {
-                Facing::Down
-            }
-        }
-    }
-
-    /// 获取朝向对应的索引
-    ///
-    /// 上: 0, 左: 1, 下: 2, 右: 3
-    pub fn direction_index(&self) -> usize {
-        match self {
-            Facing::Up => 0,
-            Facing::Left => 1,
-            Facing::Down => 2,
-            Facing::Right => 3,
-        }
-    }
-}
-
 /// 动画控制器组件
 ///
 /// 控制角色当前播放的动画类型和朝向
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct AnimationController {
     /// 当前播放的动画类型
     pub current_animation: AnimationType,
-    /// 角色当前朝向
-    pub facing: Facing,
-}
-
-impl Default for AnimationController {
-    fn default() -> Self {
-        Self {
-            current_animation: AnimationType::Walk,
-            facing: Facing::Down,
-        }
-    }
 }
 
 impl AnimationController {
     /// 根据当前动画和朝向获取动画剪辑
     ///
     /// 动画剪辑定义了精灵表中应该播放哪些帧
-    pub fn get_clip(&self, config: &CharacterEntry) -> Option<AnimationClip> {
+    pub fn get_clip(&self, config: &CharacterEntry, facing: Facing) -> Option<AnimationClip> {
         let def = config.animations.get(&self.current_animation)?;
 
         // 计算动画在精灵表中的行号
         // 如果动画有方向变化，则根据朝向调整行号
         let row = if def.directional {
-            def.start_row + self.facing.direction_index()
+            def.start_row + facing.direction_index()
         } else {
             def.start_row
         };
@@ -95,21 +36,6 @@ impl AnimationController {
             config.atlas_columns,
         ))
     }
-}
-
-/// 动画状态组件
-///
-/// 追踪角色的运动和跳跃状态，用于触发适当的动画
-#[derive(Component, Default)]
-pub struct AnimationState {
-    /// 角色是否正在移动
-    pub is_moving: bool,
-    /// 上一帧角色是否正在移动
-    pub was_moving: bool,
-    /// 角色是否正在跳跃
-    pub is_jumping: bool,
-    /// 上一帧角色是否正在跳跃
-    pub was_jumping: bool,
 }
 
 /// 动画计时器组件
@@ -173,79 +99,114 @@ impl AnimationClip {
     }
 }
 
-/// 角色动画系统
+/// 根据角色状态变化更新动画
 ///
-/// 根据角色的运动状态和动画控制器更新精灵显示的帧
-pub fn animate_characters(
+/// 当角色状态发生改变时，此系统会根据新的状态设置相应的动画类型，
+/// 并重置动画计时器以确保动画从头开始播放。
+///
+/// # 参数
+/// * `query` - 查询包含角色状态、动画控制器和动画计时器的实体，仅处理状态已改变的实体
+///
+/// # 组件说明
+/// * `CharacterState` - 角色当前状态（空闲、行走、奔跑、跳跃）
+/// * `AnimationController` - 动画控制器，管理当前播放的动画类型
+/// * `AnimationTimer` - 动画计时器，控制动画播放进度
+pub fn on_state_change_update_animation(
+    mut query: Query<
+        (
+            &CharacterState,
+            &mut AnimationController,
+            &mut AnimationTimer,
+        ),
+        Changed<CharacterState>,
+    >,
+) {
+    for (state, mut controller, mut timer) in query.iter_mut() {
+        // 根据角色状态匹配对应的动画类型
+        let new_animation = match state {
+            CharacterState::Idle | CharacterState::Walking => AnimationType::Walk,
+            CharacterState::Running => AnimationType::Run,
+            CharacterState::Jumping => AnimationType::Jump,
+        };
+
+        // 如果动画类型发生变化，则更新动画并重置计时器
+        if controller.current_animation != new_animation {
+            controller.current_animation = new_animation;
+            timer.0.reset();
+        }
+    }
+}
+
+/// 更新角色动画播放状态
+///
+/// 该系统负责根据角色当前状态、朝向和动画控制器来更新精灵图集索引，
+/// 实现动画帧的切换和播放控制
+///
+/// # 参数
+/// * `time` - 时间资源，用于获取帧间隔时间
+/// * `query` - 查询包含角色动画相关组件的实体
+///   - `CharacterState` - 角色状态组件
+///   - `Facing` - 角色朝向组件  
+///   - `AnimationController` - 动画控制器组件
+///   - `AnimationTimer` - 动画计时器组件
+///   - `Sprite` - 精灵组件（包含纹理图集）
+///   - `CharacterEntry` - 角色配置条目组件
+///
+/// # 处理逻辑
+/// - 对于空闲状态的角色，将其动画设置为起始帧并保持不动
+/// - 对于非空闲状态的角色，根据计时器更新动画帧
+/// - 自动处理动画循环和帧率调整
+pub fn animations_playback(
     time: Res<Time>,
     mut query: Query<(
+        &CharacterState,
+        &Facing,
         &AnimationController,
-        &AnimationState,
         &mut AnimationTimer,
         &mut Sprite,
         &CharacterEntry,
     )>,
 ) {
-    for (animated, state, mut timer, mut sprite, config) in query.iter_mut() {
-        // 获取精灵的纹理图集
+    for (state, facing, controller, mut timer, mut sprite, config) in query.iter_mut() {
+        // 处理空闲状态：将动画设置为起始帧并停止播放
+        if *state == CharacterState::Idle {
+            if let Some(atlas) = sprite.texture_atlas.as_mut() {
+                if let Some(clip) = controller.get_clip(config, *facing) {
+                    if atlas.index != clip.start() {
+                        atlas.index = clip.start();
+                    }
+                }
+            }
+            continue;
+        }
+
+        // 获取必要的动画数据
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
         };
-        // 获取当前动画的剪辑
-        let Some(clip) = animated.get_clip(config) else {
+        let Some(clip) = controller.get_clip(config, *facing) else {
             continue;
         };
-        // 获取当前动画的定义
-        let Some(anim_def) = config.animations.get(&animated.current_animation) else {
+        let Some(anim_def) = config.animations.get(&controller.current_animation) else {
             continue;
         };
 
-        // 如果当前帧不在动画范围内，重置到起始帧
+        // 检查当前帧索引是否在动画片段范围内，不在则重置到起始帧
         if !clip.contains(atlas.index) {
             atlas.index = clip.start();
-            timer.reset();
+            timer.0.reset();
         }
 
-        // 检测状态变化
-        let just_started_moving = state.is_moving && !state.was_moving;
-        let just_stopped_moving = !state.is_moving && state.was_moving;
-        let just_started_jumping = state.is_jumping && !state.was_jumping;
-        let just_stopped_jumping = !state.is_jumping && state.was_jumping;
-
-        // 确定是否需要播放动画
-        let should_animate = state.is_jumping || state.is_moving;
-        // 检测动画是否改变
-        let animation_changed = just_started_moving
-            || just_started_jumping
-            || just_stopped_moving
-            || just_stopped_jumping;
-
-        if animation_changed {
-            // 动画改变时，重置到起始帧
-            atlas.index = clip.start();
-            timer.set_duration(Duration::from_secs_f32(anim_def.frame_time));
-            timer.reset();
-        } else if should_animate {
-            // 播放动画时，更新计时器和帧索引
-            timer.tick(time.delta());
-            if timer.just_finished() {
-                atlas.index = clip.next(atlas.index);
-            }
-        } else {
-            // 不播放动画时，显示起始帧
-            if atlas.index != clip.start() {
-                atlas.index = clip.start();
-            }
+        // 同步动画帧持续时间与定义的时间设置
+        let expected_duration = std::time::Duration::from_secs_f32(anim_def.frame_time);
+        if timer.duration() != expected_duration {
+            timer.set_duration(expected_duration);
         }
-    }
-}
 
-/// 更新动画状态标志系统
-///
-/// 在每帧结束时，将当前状态保存为"上一帧"状态
-pub fn update_animation_flags(mut query: Query<&mut AnimationState>) {
-    for mut state in query.iter_mut() {
-        state.was_moving = state.is_moving;
-        state.was_jumping = state.is_jumping;
+        // 更新计时器并处理帧切换
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            atlas.index = clip.next(atlas.index);
+        }
     }
 }
