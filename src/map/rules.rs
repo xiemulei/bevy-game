@@ -6,43 +6,52 @@ use bevy_procedural_tilemaps::prelude::{
     SocketsCartesian3D,
 };
 
+/// 构建泥土层
+///
+/// 创建泥土层的模型和连接规则
 fn build_dirt_layer(
     terrain_model_builder: &mut TerrainModelBuilder,
     terrain_sockets: &TerrainSockets,
     socket_collection: &mut SocketCollection,
 ) {
+    // 创建主要的泥土瓦片模型
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Simple {
-                // socket on the x+ side
+                // x+ 方向的连接器
                 x_pos: terrain_sockets.dirt.material,
-                // socket on the x- side
+                // x- 方向的连接器
                 x_neg: terrain_sockets.dirt.material,
-                // socket on the z+ side
+                // z+ 方向的连接器（向上）
                 z_pos: terrain_sockets.dirt.layer_up,
-                // socket on the z- side
+                // z- 方向的连接器（向下）
                 z_neg: terrain_sockets.dirt.layer_down,
-                // socket on the y+ side
+                // y+ 方向的连接器
                 y_pos: terrain_sockets.dirt.material,
-                // socket on the y- side
+                // y- 方向的连接器
                 y_neg: terrain_sockets.dirt.material,
             },
             vec![SpawnableAsset::new("dirt")],
         )
+        // 设置生成权重（越高越常见）
         .with_weight(20.);
 
+    // 添加连接规则：泥土材质只能与泥土材质连接
     socket_collection.add_connections(vec![(
         terrain_sockets.dirt.material,
         vec![terrain_sockets.dirt.material],
     )]);
 }
 
+/// 构建草地层
+///
+/// 创建绿色草地层的模型和连接规则，包括主瓦片、外角、内角和边缘
 fn build_grass_layer(
     terrain_model_builder: &mut TerrainModelBuilder,
     terrain_sockets: &TerrainSockets,
     socket_collection: &mut SocketCollection,
 ) {
-    // Void model - empty space above dirt where no grass exists
+    // 空模型 - 代表泥土上方没有草地的区域
     terrain_model_builder.create_model(
         SocketsCartesian3D::Simple {
             x_pos: terrain_sockets.void,
@@ -55,7 +64,7 @@ fn build_grass_layer(
         Vec::new(),
     );
 
-    // Main grass tile
+    // 主草地瓦片
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Multiple {
@@ -73,7 +82,7 @@ fn build_grass_layer(
         )
         .with_weight(5.);
 
-    // Outer corner template
+    // 外角模板
     let green_grass_corner_out = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.void_and_grass,
         x_neg: terrain_sockets.void,
@@ -84,7 +93,7 @@ fn build_grass_layer(
     }
     .to_template();
 
-    // Inner corner template
+    // 内角模板
     let green_grass_corner_in = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.grass_and_void,
         x_neg: terrain_sockets.grass.material,
@@ -95,7 +104,7 @@ fn build_grass_layer(
     }
     .to_template();
 
-    // Side edge template
+    // 边缘模板
     let green_grass_side = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.void_and_grass,
         x_neg: terrain_sockets.grass.grass_and_void,
@@ -178,11 +187,15 @@ fn build_grass_layer(
     ]);
 }
 
+/// 构建黄色草地层
+///
+/// 创建黄色草地层的模型和连接规则
 fn build_yellow_grass_layer(
     terrain_model_builder: &mut TerrainModelBuilder,
     terrain_sockets: &TerrainSockets,
     socket_collection: &mut SocketCollection,
 ) {
+    // 空模型
     terrain_model_builder.create_model(
         SocketsCartesian3D::Simple {
             x_pos: terrain_sockets.void,
@@ -195,7 +208,7 @@ fn build_yellow_grass_layer(
         Vec::new(),
     );
 
-    // Main yellow grass tile
+    // 主黄色草地瓦片
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Simple {
@@ -210,7 +223,7 @@ fn build_yellow_grass_layer(
         )
         .with_weight(5.);
 
-    // Outer corner template
+    // 外角模板
     let yellow_grass_corner_out = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.void_and_grass,
         x_neg: terrain_sockets.void,
@@ -221,7 +234,7 @@ fn build_yellow_grass_layer(
     }
     .to_template();
 
-    // Inner corner template
+    // 内角模板
     let yellow_grass_corner_in = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.grass_and_void,
         x_neg: terrain_sockets.grass.material,
@@ -232,7 +245,7 @@ fn build_yellow_grass_layer(
     }
     .to_template();
 
-    // Side edge template
+    // 边缘模板
     let yellow_grass_side = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.grass.void_and_grass,
         x_neg: terrain_sockets.grass.grass_and_void,
@@ -243,6 +256,7 @@ fn build_yellow_grass_layer(
     }
     .to_template();
 
+    // 创建旋转版本
     terrain_model_builder.create_model(
         yellow_grass_corner_out.clone(),
         vec![SpawnableAsset::new("yellow_grass_corner_out_tl")],
@@ -294,6 +308,7 @@ fn build_yellow_grass_layer(
         vec![SpawnableAsset::new("yellow_grass_side_r")],
     );
 
+    // 添加连接规则
     socket_collection
         .add_rotated_connection(
             terrain_sockets.grass.layer_up,
@@ -305,12 +320,15 @@ fn build_yellow_grass_layer(
         );
 }
 
+/// 构建水层
+///
+/// 创建水层的模型和连接规则
 pub fn build_water_layer(
     terrain_model_builder: &mut TerrainModelBuilder,
     terrain_sockets: &TerrainSockets,
     socket_collection: &mut SocketCollection,
 ) {
-    // Void model - represents land areas where no water exists
+    // 空模型 - 代表没有水的陆地区域
     terrain_model_builder.create_model(
         SocketsCartesian3D::Multiple {
             x_pos: vec![terrain_sockets.void],
@@ -326,7 +344,7 @@ pub fn build_water_layer(
         Vec::new(),
     );
 
-    // Main water tile
+    // 主水瓦片
     const WATER_WEIGHT: f32 = 0.02;
     terrain_model_builder
         .create_model(
@@ -342,7 +360,7 @@ pub fn build_water_layer(
         )
         .with_weight(10. * WATER_WEIGHT);
 
-    // Outer corner template
+    // 外角模板
     let water_corner_out = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.water.void_and_water,
         x_neg: terrain_sockets.void,
@@ -354,7 +372,7 @@ pub fn build_water_layer(
     .to_template()
     .with_weight(WATER_WEIGHT);
 
-    // Inner corner template
+    // 内角模板
     let water_corner_in = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.water.water_and_void,
         x_neg: terrain_sockets.water.material,
@@ -366,7 +384,7 @@ pub fn build_water_layer(
     .to_template()
     .with_weight(WATER_WEIGHT);
 
-    // Side edge template
+    // 边缘模板
     let water_side = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.water.void_and_water,
         x_neg: terrain_sockets.water.water_and_void,
@@ -378,7 +396,7 @@ pub fn build_water_layer(
     .to_template()
     .with_weight(WATER_WEIGHT);
 
-    // Create rotated versions of outer corners
+    // 创建外角的旋转版本
     terrain_model_builder.create_model(
         water_corner_out.clone(),
         vec![SpawnableAsset::new("water_corner_out_tl")],
@@ -396,7 +414,7 @@ pub fn build_water_layer(
         vec![SpawnableAsset::new("water_corner_out_tr")],
     );
 
-    // Create rotated versions of inner corners
+    // 创建内角的旋转版本
     terrain_model_builder.create_model(
         water_corner_in.clone(),
         vec![SpawnableAsset::new("water_corner_in_tl")],
@@ -414,7 +432,7 @@ pub fn build_water_layer(
         vec![SpawnableAsset::new("water_corner_in_tr")],
     );
 
-    // Create rotated versions of side edges
+    // 创建边缘的旋转版本
     terrain_model_builder.create_model(
         water_side.clone(),
         vec![SpawnableAsset::new("water_side_t")],
@@ -432,7 +450,7 @@ pub fn build_water_layer(
         vec![SpawnableAsset::new("water_side_r")],
     );
 
-    // Add connection rules
+    // 添加连接规则
     socket_collection.add_connections(vec![
         (
             terrain_sockets.water.material,
@@ -444,13 +462,16 @@ pub fn build_water_layer(
         ),
     ]);
 
-    // Connect water layer to yellow grass layer
+    // 将水层连接到黄色草地层
     socket_collection.add_rotated_connection(
         terrain_sockets.yellow_grass.layer_up,
         vec![terrain_sockets.water.layer_down],
     );
 }
 
+/// 构建道具层
+///
+/// 创建树木、岩石等装饰物的模型和连接规则
 fn build_props_layer(
     terrain_model_builder: &mut TerrainModelBuilder,
     terrain_sockets: &TerrainSockets,
@@ -468,12 +489,13 @@ fn build_props_layer(
         Vec::new(),
     );
 
-    // Weight constants for different prop types
+    // 不同类型道具的权重常量
     const PROPS_WEIGHT: f32 = 0.025;
     const ROCKS_WEIGHT: f32 = 0.008;
     const PLANTS_WEIGHT: f32 = 0.025;
     const STUMPS_WEIGHT: f32 = 0.012;
 
+    // 基础道具模板
     let prop = SocketsCartesian3D::Simple {
         x_pos: terrain_sockets.void,
         x_neg: terrain_sockets.void,
@@ -485,12 +507,12 @@ fn build_props_layer(
     .to_template()
     .with_weight(PROPS_WEIGHT);
 
-    // create different prop types with different weights
+    // 创建不同类型的道具，使用不同的权重
     let plant_prop = prop.clone().with_weight(PLANTS_WEIGHT);
     let rock_prop = prop.clone().with_weight(ROCKS_WEIGHT);
     let stump_prop = prop.clone().with_weight(STUMPS_WEIGHT);
 
-    // 小树 2片图块
+    // 小树（2 片图块）
     terrain_model_builder.create_model(
         plant_prop.clone(),
         vec![
@@ -499,7 +521,7 @@ fn build_props_layer(
         ],
     );
 
-    // 大树-1 2x2 图块
+    // 大树-1（2x2 图块）
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Simple {
@@ -534,7 +556,7 @@ fn build_props_layer(
         )
         .with_weight(PROPS_WEIGHT);
 
-    // 大树-2 2x2 图块
+    // 大树-2（2x2 图块）
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Simple {
@@ -568,7 +590,7 @@ fn build_props_layer(
         )
         .with_weight(PROPS_WEIGHT);
 
-    // Tree stumps
+    // 树桩
     terrain_model_builder.create_model(
         stump_prop.clone(),
         vec![SpawnableAsset::new("tree_stump_1")],
@@ -582,19 +604,19 @@ fn build_props_layer(
         vec![SpawnableAsset::new("tree_stump_3")],
     );
 
-    // Rocks
+    // 岩石
     terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_1")]);
     terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_2")]);
     terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_3")]);
     terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_4")]);
 
-    // Plants
+    // 植物
     terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_1")]);
     terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_2")]);
     terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_3")]);
     terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_4")]);
 
-    // Add connection rules
+    // 添加连接规则
     socket_collection.add_connections(vec![
         (
             terrain_sockets.props.big_tree_1_base,
@@ -606,7 +628,7 @@ fn build_props_layer(
         ),
     ]);
 
-    // connect props to water layer
+    // 将道具层连接到水层
     socket_collection
         .add_rotated_connection(
             terrain_sockets.water.layer_up,
@@ -618,48 +640,55 @@ fn build_props_layer(
         );
 }
 
+/// 构建世界
+///
+/// 创建所有地形层的模型和规则，返回资源、模型和连接器集合
 pub fn build_world() -> (
     Vec<Vec<SpawnableAsset>>,
     ModelCollection<Cartesian3D>,
     SocketCollection,
 ) {
     let mut socket_collection = SocketCollection::new();
+    // 创建地形连接器
     let terrain_sockets = create_sockets(&mut socket_collection);
     let mut terrain_model_builder = TerrainModelBuilder::new();
 
-    // Build dirt layer
+    // 构建泥土层
     build_dirt_layer(
         &mut terrain_model_builder,
         &terrain_sockets,
         &mut socket_collection,
     );
 
-    // Build grass layer
+    // 构建草地层
     build_grass_layer(
         &mut terrain_model_builder,
         &terrain_sockets,
         &mut socket_collection,
     );
 
-    // Build yellow grass layer
+    // 构建黄色草地层
     build_yellow_grass_layer(
         &mut terrain_model_builder,
         &terrain_sockets,
         &mut socket_collection,
     );
 
+    // 构建水层
     build_water_layer(
         &mut terrain_model_builder,
         &terrain_sockets,
         &mut socket_collection,
     );
 
+    // 构建道具层
     build_props_layer(
         &mut terrain_model_builder,
         &terrain_sockets,
         &mut socket_collection,
     );
 
+    // 将构建器拆分为组件
     let (assets, models) = terrain_model_builder.into_parts();
 
     (assets, models, socket_collection)
