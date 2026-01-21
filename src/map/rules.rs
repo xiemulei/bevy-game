@@ -1,3 +1,4 @@
+use crate::collision::TileType;
 use crate::map::assets::SpawnableAsset;
 use crate::map::model::TerrainModelBuilder;
 use crate::map::socket::{TerrainSockets, create_sockets};
@@ -31,7 +32,7 @@ fn build_dirt_layer(
                 // y- 方向的连接器
                 y_neg: terrain_sockets.dirt.material,
             },
-            vec![SpawnableAsset::new("dirt")],
+            vec![SpawnableAsset::new("dirt").with_tile_type(TileType::Dirt)],
         )
         // 设置生成权重（越高越常见）
         .with_weight(20.);
@@ -78,7 +79,7 @@ fn build_grass_layer(
                 y_pos: vec![terrain_sockets.grass.material],
                 y_neg: vec![terrain_sockets.grass.material],
             },
-            vec![SpawnableAsset::new("green_grass")],
+            vec![SpawnableAsset::new("green_grass").with_tile_type(TileType::Grass)],
         )
         .with_weight(5.);
 
@@ -118,55 +119,55 @@ fn build_grass_layer(
     // 创建草地外角的旋转版本，逆时针旋转
     terrain_model_builder.create_model(
         green_grass_corner_out.clone(),
-        vec![SpawnableAsset::new("green_grass_corner_out_tl")],
+        vec![SpawnableAsset::new("green_grass_corner_out_tl").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_out.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_out_bl")],
+        vec![SpawnableAsset::new("green_grass_corner_out_bl").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_out.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_out_br")],
+        vec![SpawnableAsset::new("green_grass_corner_out_br").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_out.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_out_tr")],
+        vec![SpawnableAsset::new("green_grass_corner_out_tr").with_tile_type(TileType::Grass)],
     );
 
     // 创建草地内角的旋转版本，逆时针旋转
     terrain_model_builder.create_model(
         green_grass_corner_in.clone(),
-        vec![SpawnableAsset::new("green_grass_corner_in_tl")],
+        vec![SpawnableAsset::new("green_grass_corner_in_tl").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_in.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_in_bl")],
+        vec![SpawnableAsset::new("green_grass_corner_in_bl").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_in.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_in_br")],
+        vec![SpawnableAsset::new("green_grass_corner_in_br").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_corner_in.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_corner_in_tr")],
+        vec![SpawnableAsset::new("green_grass_corner_in_tr").with_tile_type(TileType::Grass)],
     );
 
     // 创建草地边缘的旋转版本，逆时针旋转
     terrain_model_builder.create_model(
         green_grass_side.clone(),
-        vec![SpawnableAsset::new("green_grass_side_t")],
+        vec![SpawnableAsset::new("green_grass_side_t").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_side.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_side_l")],
+        vec![SpawnableAsset::new("green_grass_side_l").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_side.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_side_b")],
+        vec![SpawnableAsset::new("green_grass_side_b").with_tile_type(TileType::Grass)],
     );
     terrain_model_builder.create_model(
         green_grass_side.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("green_grass_side_r")],
+        vec![SpawnableAsset::new("green_grass_side_r").with_tile_type(TileType::Grass)],
     );
 
     // 创建连接规则
@@ -219,7 +220,7 @@ fn build_yellow_grass_layer(
                 y_pos: terrain_sockets.grass.material,
                 y_neg: terrain_sockets.grass.material,
             },
-            vec![SpawnableAsset::new("yellow_grass")],
+            vec![SpawnableAsset::new("yellow_grass").with_tile_type(TileType::YellowGrass)],
         )
         .with_weight(5.);
 
@@ -259,53 +260,69 @@ fn build_yellow_grass_layer(
     // 创建旋转版本
     terrain_model_builder.create_model(
         yellow_grass_corner_out.clone(),
-        vec![SpawnableAsset::new("yellow_grass_corner_out_tl")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_out_tl").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_out.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_out_bl")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_out_bl").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_out.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_out_br")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_out_br").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_out.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_out_tr")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_out_tr").with_tile_type(TileType::YellowGrass),
+        ],
     );
 
     terrain_model_builder.create_model(
         yellow_grass_corner_in.clone(),
-        vec![SpawnableAsset::new("yellow_grass_corner_in_tl")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_in_tl").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_in.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_in_bl")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_in_bl").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_in.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_in_br")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_in_br").with_tile_type(TileType::YellowGrass),
+        ],
     );
     terrain_model_builder.create_model(
         yellow_grass_corner_in.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_corner_in_tr")],
+        vec![
+            SpawnableAsset::new("yellow_grass_corner_in_tr").with_tile_type(TileType::YellowGrass),
+        ],
     );
 
     terrain_model_builder.create_model(
         yellow_grass_side.clone(),
-        vec![SpawnableAsset::new("yellow_grass_side_t")],
+        vec![SpawnableAsset::new("yellow_grass_side_t").with_tile_type(TileType::YellowGrass)],
     );
     terrain_model_builder.create_model(
         yellow_grass_side.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_side_l")],
+        vec![SpawnableAsset::new("yellow_grass_side_l").with_tile_type(TileType::YellowGrass)],
     );
     terrain_model_builder.create_model(
         yellow_grass_side.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_side_b")],
+        vec![SpawnableAsset::new("yellow_grass_side_b").with_tile_type(TileType::YellowGrass)],
     );
     terrain_model_builder.create_model(
         yellow_grass_side.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("yellow_grass_side_r")],
+        vec![SpawnableAsset::new("yellow_grass_side_r").with_tile_type(TileType::YellowGrass)],
     );
 
     // 添加连接规则
@@ -345,7 +362,7 @@ pub fn build_water_layer(
     );
 
     // 主水瓦片
-    const WATER_WEIGHT: f32 = 0.02;
+    const WATER_WEIGHT: f32 = 0.01;
     terrain_model_builder
         .create_model(
             SocketsCartesian3D::Simple {
@@ -356,7 +373,7 @@ pub fn build_water_layer(
                 y_pos: terrain_sockets.water.material,
                 y_neg: terrain_sockets.water.material,
             },
-            vec![SpawnableAsset::new("water")],
+            vec![SpawnableAsset::new("water").with_tile_type(TileType::Water)],
         )
         .with_weight(10. * WATER_WEIGHT);
 
@@ -399,55 +416,55 @@ pub fn build_water_layer(
     // 创建外角的旋转版本
     terrain_model_builder.create_model(
         water_corner_out.clone(),
-        vec![SpawnableAsset::new("water_corner_out_tl")],
+        vec![SpawnableAsset::new("water_corner_out_tl").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_bl")],
+        vec![SpawnableAsset::new("water_corner_out_bl").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_br")],
+        vec![SpawnableAsset::new("water_corner_out_br").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_out.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_out_tr")],
+        vec![SpawnableAsset::new("water_corner_out_tr").with_tile_type(TileType::Water)],
     );
 
     // 创建内角的旋转版本
     terrain_model_builder.create_model(
         water_corner_in.clone(),
-        vec![SpawnableAsset::new("water_corner_in_tl")],
+        vec![SpawnableAsset::new("water_corner_in_tl").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_bl")],
+        vec![SpawnableAsset::new("water_corner_in_bl").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_br")],
+        vec![SpawnableAsset::new("water_corner_in_br").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_corner_in.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_corner_in_tr")],
+        vec![SpawnableAsset::new("water_corner_in_tr").with_tile_type(TileType::Water)],
     );
 
     // 创建边缘的旋转版本
     terrain_model_builder.create_model(
         water_side.clone(),
-        vec![SpawnableAsset::new("water_side_t")],
+        vec![SpawnableAsset::new("water_side_t").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot90, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_l")],
+        vec![SpawnableAsset::new("water_side_l").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot180, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_b")],
+        vec![SpawnableAsset::new("water_side_b").with_tile_type(TileType::Water)],
     );
     terrain_model_builder.create_model(
         water_side.rotated(ModelRotation::Rot270, Direction::ZForward),
-        vec![SpawnableAsset::new("water_side_r")],
+        vec![SpawnableAsset::new("water_side_r").with_tile_type(TileType::Water)],
     );
 
     // 添加连接规则
@@ -516,7 +533,7 @@ fn build_props_layer(
     terrain_model_builder.create_model(
         plant_prop.clone(),
         vec![
-            SpawnableAsset::new("small_tree_bottom"),
+            SpawnableAsset::new("small_tree_bottom").with_tile_type(TileType::Tree),
             SpawnableAsset::new("small_tree_top").with_grid_offset(GridDelta::new(0, 1, 0)),
         ],
     );
@@ -533,7 +550,7 @@ fn build_props_layer(
                 y_neg: terrain_sockets.void,
             },
             vec![
-                SpawnableAsset::new("big_tree_1_bl"),
+                SpawnableAsset::new("big_tree_1_bl").with_tile_type(TileType::Tree),
                 SpawnableAsset::new("big_tree_1_tl").with_grid_offset(GridDelta::new(0, 1, 0)),
             ],
         )
@@ -550,7 +567,7 @@ fn build_props_layer(
                 y_neg: terrain_sockets.void,
             },
             vec![
-                SpawnableAsset::new("big_tree_1_br"),
+                SpawnableAsset::new("big_tree_1_br").with_tile_type(TileType::Tree),
                 SpawnableAsset::new("big_tree_1_tr").with_grid_offset(GridDelta::new(0, 1, 0)),
             ],
         )
@@ -568,7 +585,7 @@ fn build_props_layer(
                 y_neg: terrain_sockets.void,
             },
             vec![
-                SpawnableAsset::new("big_tree_2_bl"),
+                SpawnableAsset::new("big_tree_2_bl").with_tile_type(TileType::Tree),
                 SpawnableAsset::new("big_tree_2_tl").with_grid_offset(GridDelta::new(0, 1, 0)),
             ],
         )
@@ -584,7 +601,7 @@ fn build_props_layer(
                 y_neg: terrain_sockets.void,
             },
             vec![
-                SpawnableAsset::new("big_tree_2_br"),
+                SpawnableAsset::new("big_tree_2_br").with_tile_type(TileType::Tree),
                 SpawnableAsset::new("big_tree_2_tr").with_grid_offset(GridDelta::new(0, 1, 0)),
             ],
         )
@@ -593,28 +610,52 @@ fn build_props_layer(
     // 树桩
     terrain_model_builder.create_model(
         stump_prop.clone(),
-        vec![SpawnableAsset::new("tree_stump_1")],
+        vec![SpawnableAsset::new("tree_stump_1").with_tile_type(TileType::Tree)],
     );
     terrain_model_builder.create_model(
         stump_prop.clone(),
-        vec![SpawnableAsset::new("tree_stump_2")],
+        vec![SpawnableAsset::new("tree_stump_2").with_tile_type(TileType::Tree)],
     );
     terrain_model_builder.create_model(
         stump_prop.clone(),
-        vec![SpawnableAsset::new("tree_stump_3")],
+        vec![SpawnableAsset::new("tree_stump_3").with_tile_type(TileType::Tree)],
     );
 
     // 岩石
-    terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_1")]);
-    terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_2")]);
-    terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_3")]);
-    terrain_model_builder.create_model(rock_prop.clone(), vec![SpawnableAsset::new("rock_4")]);
+    terrain_model_builder.create_model(
+        rock_prop.clone(),
+        vec![SpawnableAsset::new("rock_1").with_tile_type(TileType::Rock)],
+    );
+    terrain_model_builder.create_model(
+        rock_prop.clone(),
+        vec![SpawnableAsset::new("rock_2").with_tile_type(TileType::Rock)],
+    );
+    terrain_model_builder.create_model(
+        rock_prop.clone(),
+        vec![SpawnableAsset::new("rock_3").with_tile_type(TileType::Rock)],
+    );
+    terrain_model_builder.create_model(
+        rock_prop.clone(),
+        vec![SpawnableAsset::new("rock_4").with_tile_type(TileType::Rock)],
+    );
 
     // 植物
-    terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_1")]);
-    terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_2")]);
-    terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_3")]);
-    terrain_model_builder.create_model(plant_prop.clone(), vec![SpawnableAsset::new("plant_4")]);
+    terrain_model_builder.create_model(
+        plant_prop.clone(),
+        vec![SpawnableAsset::new("plant_1").with_tile_type(TileType::Grass)],
+    );
+    terrain_model_builder.create_model(
+        plant_prop.clone(),
+        vec![SpawnableAsset::new("plant_2").with_tile_type(TileType::Grass)],
+    );
+    terrain_model_builder.create_model(
+        plant_prop.clone(),
+        vec![SpawnableAsset::new("plant_3").with_tile_type(TileType::Grass)],
+    );
+    terrain_model_builder.create_model(
+        plant_prop.clone(),
+        vec![SpawnableAsset::new("plant_4").with_tile_type(TileType::Grass)],
+    );
 
     // 添加连接规则
     socket_collection.add_connections(vec![

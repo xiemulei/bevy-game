@@ -156,7 +156,7 @@ pub fn on_state_change_update_animation(
 /// - 对于空闲状态的角色，将其动画设置为起始帧并保持不动
 /// - 对于非空闲状态的角色，根据计时器更新动画帧
 /// - 自动处理动画循环和帧率调整
-pub fn animations_playback(
+pub fn tick_animations(
     time: Res<Time>,
     mut query: Query<(
         &CharacterState,

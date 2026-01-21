@@ -1,4 +1,6 @@
 mod characters;
+mod collision;
+mod config;
 mod map;
 mod state;
 
@@ -39,6 +41,7 @@ fn main() {
         // 添加过程化地图生成插件
         .add_plugins(ProcGenSimplePlugin::<Cartesian3D, Sprite>::default())
         .add_plugins(state::StatePlugin)
+        .add_plugins(collision::CollisionPlugin)
         // 添加角色插件
         .add_plugins(characters::CharactersPlugin)
         // 在启动时设置相机和地图生成器

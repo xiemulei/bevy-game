@@ -1,17 +1,14 @@
 use crate::characters::animation::{
     AnimationController, AnimationTimer, DEFAULT_ANIMATION_FRAME_TIME,
 };
+use crate::characters::collider::Collider;
 use crate::characters::config::{CharacterEntry, CharactersList};
 use crate::characters::facing::Facing;
 use crate::characters::input::Player;
 use crate::characters::physics::Velocity;
 use crate::characters::state::CharacterState;
+use crate::config::player::{PLAYER_SCALE, PLAYER_Z_POSITION};
 use bevy::prelude::*;
-
-/// 玩家缩放比例
-const PLAYER_SCALE: f32 = 0.8;
-/// 玩家的 Z 轴位置（用于确定渲染顺序）
-const PLAYER_Z_POSITION: f32 = 20.0;
 
 /// 当前角色索引资源
 ///
@@ -128,6 +125,7 @@ pub fn initialize_player_character(
             CharacterState::default(),
             Velocity::default(),
             Facing::default(),
+            Collider::default(),
             AnimationTimer(Timer::from_seconds(
                 DEFAULT_ANIMATION_FRAME_TIME,
                 TimerMode::Repeating,

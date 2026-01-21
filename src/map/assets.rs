@@ -1,3 +1,4 @@
+use crate::collision::{TileMarker, TileType};
 use crate::map::tilemap::TILEMAP;
 use bevy::prelude::*;
 use bevy_procedural_tilemaps::prelude::{GridDelta, ModelAsset, ModelsAssets};
@@ -13,8 +14,8 @@ pub struct SpawnableAsset {
     grid_offset: GridDelta,
     /// 世界坐标偏移量
     offset: Vec3,
-    /// 组件生成器函数（用于添加额外的组件）
-    components_spawner: fn(&mut EntityCommands),
+    /// 用于碰撞检测的瓦片类型
+    tile_type: Option<TileType>,
 }
 
 impl SpawnableAsset {
@@ -30,7 +31,7 @@ impl SpawnableAsset {
             sprite_name,
             grid_offset: GridDelta::new(0, 0, 0),
             offset: Vec3::ZERO,
-            components_spawner: |_| {},
+            tile_type: None,
         }
     }
 
@@ -43,6 +44,12 @@ impl SpawnableAsset {
     /// 修改后的可生成资源
     pub fn with_grid_offset(mut self, offset: GridDelta) -> Self {
         self.grid_offset = offset;
+        self
+    }
+
+    /// 设置用于碰撞检测的瓦片类型
+    pub fn with_tile_type(mut self, tile_type: TileType) -> Self {
+        self.tile_type = Some(tile_type);
         self
     }
 }
@@ -130,13 +137,15 @@ pub fn load_assets(
                 sprite_name,
                 grid_offset,
                 offset,
-                components_spawner,
+                tile_type,
             } = asset_def;
 
             // 根据名称查找图集索引
             let Some(atlas_index) = TILEMAP.sprite_index(sprite_name) else {
                 panic!("Unknown atlas sprite '{}'", sprite_name);
             };
+
+            let spawner = create_spawner(tile_type);
 
             // 将资源添加到模型资源集合中
             models_assets.add(
@@ -145,11 +154,41 @@ pub fn load_assets(
                     assets_bundle: tilemap_handles.sprite(atlas_index),
                     grid_offset,
                     world_offset: offset,
-                    spawn_commands: components_spawner,
+                    spawn_commands: spawner,
                 },
             )
         }
     }
 
     models_assets
+}
+
+fn create_spawner(tile_type: Option<TileType>) -> fn(&mut EntityCommands) {
+    match tile_type {
+        Some(TileType::Dirt) => |e| {
+            e.insert(TileMarker::new(TileType::Dirt));
+        },
+        Some(TileType::Grass) => |e| {
+            e.insert(TileMarker::new(TileType::Grass));
+        },
+        Some(TileType::YellowGrass) => |e| {
+            e.insert(TileMarker::new(TileType::YellowGrass));
+        },
+        Some(TileType::Water) => |e| {
+            e.insert(TileMarker::new(TileType::Water));
+        },
+        Some(TileType::Shore) => |e| {
+            e.insert(TileMarker::new(TileType::Shore));
+        },
+        Some(TileType::Tree) => |e| {
+            e.insert(TileMarker::new(TileType::Tree));
+        },
+        Some(TileType::Rock) => |e| {
+            e.insert(TileMarker::new(TileType::Rock));
+        },
+        Some(TileType::Empty) => |e| {
+            e.insert(TileMarker::new(TileType::Empty));
+        },
+        _ => |_| {},
+    }
 }

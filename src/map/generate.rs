@@ -1,3 +1,4 @@
+use crate::config::map::{GRID_X, GRID_Y, TILE_SIZE};
 use crate::map::assets::{load_assets, prepare_tilemap_handles};
 use crate::map::rules::build_world;
 use bevy::prelude::*;
@@ -6,19 +7,10 @@ use bevy_procedural_tilemaps::prelude::{
     NodesSpawner, RngMode, RulesBuilder,
 };
 
-// -----------------  可配置的值 ---------------------------
-/// 修改这些值来控制地图的大小
-pub const GRID_X: u32 = 25; // 地图 X 方向的网格数
-pub const GRID_Y: u32 = 18; // 地图 Y 方向的网格数
-
-// ------------------------------------------------------------------
-
 /// 资源路径
 const ASSETS_PATH: &str = "tile_layers";
 /// 瓦片图文件名
 const TILEMAP_FILE: &str = "tilemap.png";
-/// 单个图块在世界单位中的大小（在 Bevy 2D 中，1 像素 = 1 世界单位）
-pub const TILE_SIZE: f32 = 32.;
 /// 单个网格节点在世界单位中的大小
 const NODE_SIZE: Vec3 = Vec3::new(TILE_SIZE, TILE_SIZE, 1.);
 /// 资源缩放比例
