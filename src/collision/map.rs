@@ -94,6 +94,7 @@ impl CollisionMap {
     ///
     /// # 返回
     /// 对应的世界坐标（瓦片中心点）
+    #[allow(unused)]
     pub fn grid_to_world(&self, grid_x: i32, grid_y: i32) -> Vec2 {
         Vec2::new(
             // 计算瓦片中心点的 X 坐标
@@ -340,12 +341,10 @@ impl CollisionMap {
         pos
     }
 
-    #[cfg(debug_assertions)]
     pub fn width(&self) -> i32 {
         self.width
     }
 
-    #[cfg(debug_assertions)]
     pub fn height(&self) -> i32 {
         self.height
     }
