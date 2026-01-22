@@ -1,30 +1,19 @@
-use crate::config::map::{GRID_X, GRID_Y, TILE_SIZE};
+use crate::config::map::{GRID_X, GRID_Y, NODE_SIZE_Z, TILE_SIZE};
 use crate::map::assets::{load_assets, prepare_tilemap_handles};
 use crate::map::rules::build_world;
 use bevy::prelude::*;
-use bevy_procedural_tilemaps::prelude::{
-    CartesianGrid, Direction, GeneratorBuilder, ModelSelectionHeuristic, NodeSelectionHeuristic,
-    NodesSpawner, RngMode, RulesBuilder,
-};
+use bevy_procedural_tilemaps::prelude::*;
 
 /// 资源路径
 const ASSETS_PATH: &str = "tile_layers";
 /// 瓦片图文件名
 const TILEMAP_FILE: &str = "tilemap.png";
 /// 单个网格节点在世界单位中的大小
-const NODE_SIZE: Vec3 = Vec3::new(TILE_SIZE, TILE_SIZE, 1.);
+const NODE_SIZE: Vec3 = Vec3::new(TILE_SIZE, TILE_SIZE, NODE_SIZE_Z);
 /// 资源缩放比例
-const ASSETS_SCALE: Vec3 = Vec3::ONE;
+const ASSETS_SCALE: Vec3 = Vec3::new(2.0, 2.0, 1.0);
 /// 地图中的 Z 层数量，从默认地形层派生
 const GRID_Z: u32 = 5;
-
-/// 计算地图的像素尺寸
-///
-/// # 返回
-/// 地图宽度和高度的 2D 向量
-pub fn map_pixel_dimensions() -> Vec2 {
-    Vec2::new(TILE_SIZE * GRID_X as f32, TILE_SIZE * GRID_Y as f32)
-}
 
 /// 设置地图生成器
 ///

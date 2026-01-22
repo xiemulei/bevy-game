@@ -17,12 +17,12 @@ pub enum TileType {
 
 impl TileType {
     /// 检查瓦片是否可行走
-    /// 
+    ///
     /// 返回 false 的瓦片类型：
     /// - Water: 深水区域（不可行走）
     /// - Tree: 树木（不可行走）
     /// - Rock: 岩石（不可行走）
-    /// 
+    ///
     /// 返回 true 的瓦片类型：
     /// - Shore: 海岸/浅水区域（可行走）
     /// - Empty, Dirt, Grass, YellowGrass: 陆地区域（可行走）

@@ -1,4 +1,5 @@
 use crate::collision::{TileMarker, TileType};
+use crate::inventory::{ItemKind, Pickable};
 use crate::map::tilemap::TILEMAP;
 use bevy::prelude::*;
 use bevy_procedural_tilemaps::prelude::{GridDelta, ModelAsset, ModelsAssets};
@@ -16,6 +17,8 @@ pub struct SpawnableAsset {
     offset: Vec3,
     /// 用于碰撞检测的瓦片类型
     tile_type: Option<TileType>,
+    /// 可选的拾取物类型
+    pickable: Option<ItemKind>,
 }
 
 impl SpawnableAsset {
@@ -32,6 +35,7 @@ impl SpawnableAsset {
             grid_offset: GridDelta::new(0, 0, 0),
             offset: Vec3::ZERO,
             tile_type: None,
+            pickable: None,
         }
     }
 
@@ -50,6 +54,11 @@ impl SpawnableAsset {
     /// 设置用于碰撞检测的瓦片类型
     pub fn with_tile_type(mut self, tile_type: TileType) -> Self {
         self.tile_type = Some(tile_type);
+        self
+    }
+
+    pub fn with_pickable(mut self, kind: ItemKind) -> Self {
+        self.pickable = Some(kind);
         self
     }
 }
@@ -138,6 +147,7 @@ pub fn load_assets(
                 grid_offset,
                 offset,
                 tile_type,
+                pickable,
             } = asset_def;
 
             // 根据名称查找图集索引
@@ -145,7 +155,7 @@ pub fn load_assets(
                 panic!("Unknown atlas sprite '{}'", sprite_name);
             };
 
-            let spawner = create_spawner(tile_type);
+            let spawner = create_spawner(tile_type, pickable);
 
             // 将资源添加到模型资源集合中
             models_assets.add(
@@ -163,31 +173,58 @@ pub fn load_assets(
     models_assets
 }
 
-fn create_spawner(tile_type: Option<TileType>) -> fn(&mut EntityCommands) {
-    match tile_type {
-        Some(TileType::Dirt) => |e| {
+fn create_spawner(
+    tile_type: Option<TileType>,
+    pickable: Option<ItemKind>,
+) -> fn(&mut EntityCommands) {
+    match (tile_type, pickable) {
+        (Some(TileType::Dirt), None) => |e| {
             e.insert(TileMarker::new(TileType::Dirt));
         },
-        Some(TileType::Grass) => |e| {
+        (Some(TileType::Grass), None) => |e| {
             e.insert(TileMarker::new(TileType::Grass));
         },
-        Some(TileType::YellowGrass) => |e| {
+        (Some(TileType::YellowGrass), None) => |e| {
             e.insert(TileMarker::new(TileType::YellowGrass));
         },
-        Some(TileType::Water) => |e| {
+        (Some(TileType::Water), None) => |e| {
             e.insert(TileMarker::new(TileType::Water));
         },
-        Some(TileType::Shore) => |e| {
+        (Some(TileType::Shore), None) => |e| {
             e.insert(TileMarker::new(TileType::Shore));
         },
-        Some(TileType::Tree) => |e| {
+        (Some(TileType::Tree), None) => |e| {
             e.insert(TileMarker::new(TileType::Tree));
         },
-        Some(TileType::Rock) => |e| {
+        (Some(TileType::Rock), None) => |e| {
             e.insert(TileMarker::new(TileType::Rock));
         },
-        Some(TileType::Empty) => |e| {
+        (Some(TileType::Empty), None) => |e| {
             e.insert(TileMarker::new(TileType::Empty));
+        },
+        (Some(TileType::Grass), Some(ItemKind::Plant1)) => |e| {
+            e.insert((
+                TileMarker::new(TileType::Grass),
+                Pickable::new(ItemKind::Plant1),
+            ));
+        },
+        (Some(TileType::Grass), Some(ItemKind::Plant2)) => |e| {
+            e.insert((
+                TileMarker::new(TileType::Grass),
+                Pickable::new(ItemKind::Plant2),
+            ));
+        },
+        (Some(TileType::Grass), Some(ItemKind::Plant3)) => |e| {
+            e.insert((
+                TileMarker::new(TileType::Grass),
+                Pickable::new(ItemKind::Plant3),
+            ));
+        },
+        (Some(TileType::Grass), Some(ItemKind::Plant4)) => |e| {
+            e.insert((
+                TileMarker::new(TileType::Grass),
+                Pickable::new(ItemKind::Plant4),
+            ));
         },
         _ => |_| {},
     }
