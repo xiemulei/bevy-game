@@ -189,12 +189,8 @@ pub enum EmissionShape {
     /// 点发射
     Point,
     /// 圆形发射
-    Circle {
-        radius: f32,
-    },
+    Circle { radius: f32 },
     /// 锥形发射
     #[allow(dead_code)]
-    Cone {
-        angle: f32,
-    },
+    Cone { angle: f32 },
 }

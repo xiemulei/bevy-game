@@ -54,3 +54,39 @@ pub fn validate_movement(
         }
     }
 }
+
+pub fn resolve_entity_collisions(mut query: Query<(Entity, &Transform, &mut Velocity, &Collider)>) {
+    let entities: Vec<_> = query
+        .iter()
+        .map(|(e, t, _, c)| (e, c.world_position(t), c.radius))
+        .collect();
+
+    for (entity, transform, mut velocity, collider) in query.iter_mut() {
+        if !velocity.is_moving() {
+            continue;
+        }
+
+        let pos = collider.world_position(transform);
+        let radius = collider.radius;
+
+        for &(other_entity, other_pos, other_radius) in &entities {
+            if entity == other_entity {
+                continue;
+            }
+
+            let delta = other_pos - pos;
+            let distance = delta.length();
+            let min_distance = radius + other_radius;
+
+            if distance < min_distance * 1.1 {
+                if distance > 0.01 {
+                    let direction = delta / distance;
+                    let velocity_toward = velocity.0.dot(direction);
+                    if velocity_toward > 0.0 {
+                        velocity.0 -= direction * velocity_toward;
+                    }
+                }
+            }
+        }
+    }
+}

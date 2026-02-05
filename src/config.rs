@@ -6,6 +6,11 @@ pub mod player {
     pub const PLAYER_SCALE: f32 = 1.2;
 }
 
+pub mod enemy {
+    pub const ENEMY_Z_POSITION: f32 = 20.0;
+    pub const ENEMY_SCALE: f32 = 1.2;
+}
+
 pub mod map {
     pub const TILE_SIZE: f32 = 64.0;
 

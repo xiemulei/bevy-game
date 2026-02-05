@@ -47,7 +47,7 @@ pub fn handle_power_input(
     let spawn_position = position + direction * 5.0;
 
     // 获取视觉效果配置
-    let visuals = combat.power_type.visual(direction);
+    let visuals = combat.power_type.visuals(direction);
 
     // 生成投射物
     spawn_projectile(&mut commands, spawn_position, combat.power_type, &visuals);
@@ -56,7 +56,7 @@ pub fn handle_power_input(
 }
 
 /// 生成投射物和粒子效果
-fn spawn_projectile(
+pub fn spawn_projectile(
     commands: &mut Commands,
     position: Vec3,
     power_type: PowerType,

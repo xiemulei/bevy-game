@@ -170,10 +170,10 @@ pub fn update_particles(
         // 应用加速度
         let acceleration = particle.acceleration;
         particle.velocity += acceleration * time.delta_secs();
-        
+
         // 更新位置
         transform.translation += particle.velocity * time.delta_secs();
-        
+
         // 更新旋转
         transform.rotate_z(particle.angular_velocity * time.delta_secs());
 

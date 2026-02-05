@@ -1,4 +1,6 @@
 use crate::characters::config::CharactersList;
+use crate::characters::spawn::PlayerSpawned;
+use crate::collision::CollisionMapBuilt;
 use crate::state::GameState;
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
@@ -24,8 +26,16 @@ impl Plugin for CharactersPlugin {
         app.add_plugins(RonAssetPlugin::<CharactersList>::new(&["characters.ron"]))
             // 初始化当前角色索引资源
             .init_resource::<spawn::CurrentCharacterIndex>()
+            .init_resource::<PlayerSpawned>()
             // 在启动时生成玩家角色
-            .add_systems(Startup, spawn::spawn_player)
+            .add_systems(Startup, spawn::load_character_assets)
+            .add_systems(
+                Update,
+                spawn::spawn_player_at_valid_position
+                    .run_if(resource_equals(CollisionMapBuilt(true)))
+                    .run_if(resource_equals(PlayerSpawned(false)))
+                    .run_if(in_state(GameState::Playing)),
+            )
             // 每帧更新系统
             .add_systems(
                 Update,
@@ -36,8 +46,9 @@ impl Plugin for CharactersPlugin {
                     input::update_jump_state,
                     animation::on_state_change_update_animation,
                     collider::validate_movement,
+                    collider::resolve_entity_collisions,
                     physics::apply_velocity,
-                    rendering::update_player_depth,
+                    rendering::update_character_depth,
                     animation::tick_animations,
                 )
                     .chain()

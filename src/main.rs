@@ -3,6 +3,7 @@ mod characters;
 mod collision;
 mod combat;
 mod config;
+mod enemy;
 mod inventory;
 mod map;
 mod particles;
@@ -46,6 +47,7 @@ fn main() {
         // 添加角色插件
         .add_plugins(characters::CharactersPlugin)
         .add_plugins(combat::CombatPlugin)
+        .add_plugins(enemy::EnemyPlugin)
         .add_plugins(particles::ParticlesPlugin)
         // 在启动时设置相机和地图生成器
         .add_systems(Startup, setup_generator)

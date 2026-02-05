@@ -358,4 +358,193 @@ impl CollisionMap {
     pub fn origin(&self) -> Vec2 {
         Vec2::new(self.origin_x, self.origin_y)
     }
+
+    /// 获取指定位置的可行走邻居节点
+    ///
+    /// 此函数用于寻路算法中，返回从给定位置可以向哪些方向移动。
+    /// 包含四个正交方向（上下左右）和四个对角线方向。
+    ///
+    /// # 寻路策略
+    /// - 正交方向：只要目标位置可行走即可
+    /// - 对角线方向：需要目标位置和两个相邻的正交位置都可行走
+    ///   （防止角色"穿墙"移动，例如不能从 (0,0) 斜向走到 (1,1)，如果 (0,1) 或 (1,0) 有墙）
+    ///
+    /// # 参数
+    /// - `pos`: 网格坐标位置
+    ///
+    /// # 返回
+    /// 可行走的邻居位置列表
+    pub fn get_neighbors(&self, pos: IVec2) -> Vec<IVec2> {
+        let mut neighbors = Vec::new();
+
+        // 定义四个正交方向（上下左右）
+        let cardinals = [
+            IVec2::new(0, 1),  // 上
+            IVec2::new(0, -1), // 下
+            IVec2::new(-1, 0), // 左
+            IVec2::new(1, 0),  // 右
+        ];
+
+        // 遍历所有正交方向，检查是否可行走
+        for dir in cardinals {
+            let neighbor = pos + dir;
+            if self.is_walkable(neighbor.x, neighbor.y) {
+                neighbors.push(neighbor);
+            }
+        }
+
+        // 定义四个对角线方向及其对应的两个相邻正交方向
+        // 每个元组格式: (对角线方向, 相邻正交方向1, 相邻正交方向2)
+        let diagonals = [
+            (IVec2::new(-1, 1), IVec2::new(-1, 0), IVec2::new(0, 1)), // 左上方向，需要左和上都可行走
+            (IVec2::new(1, 1), IVec2::new(1, 0), IVec2::new(0, 1)), // 右上方向，需要右和上都可行走
+            (IVec2::new(-1, -1), IVec2::new(-1, 0), IVec2::new(0, -1)), // 左下方向，需要左和下都可行走
+            (IVec2::new(1, -1), IVec2::new(1, 0), IVec2::new(0, -1)), // 右下方向，需要右和下都可行走
+        ];
+
+        // 遍历所有对角线方向，只有当对角线位置和两个相邻位置都可行走时才添加
+        for (diagonal, adj1, adj2) in diagonals {
+            let diag_pos = pos + diagonal;
+            let adj1_pos = pos + adj1;
+            let adj2_pos = pos + adj2;
+
+            // 检查对角线位置和两个相邻位置是否都可行走
+            if self.is_walkable(diag_pos.x, diag_pos.y)
+                && self.is_walkable(adj1_pos.x, adj1_pos.y)
+                && self.is_walkable(adj2_pos.x, adj2_pos.y)
+            {
+                neighbors.push(diag_pos);
+            }
+        }
+
+        neighbors
+    }
+
+    /// 使用 A* 寻路算法寻找从起点到终点的最优路径
+    ///
+    /// # 算法说明
+    /// A* 算法是一种启发式搜索算法，结合了 Dijkstra 算法的最优性和贪心算法的高效性。
+    /// 评估函数: f(n) = g(n) + h(n)
+    /// - g(n): 从起点到当前节点的实际移动成本
+    /// - h(n): 从当前节点到终点的预估成本（启发式函数）
+    ///
+    /// # 参数
+    /// - `start`: 起点世界坐标
+    /// - `goal`: 目标终点世界坐标
+    ///
+    /// # 返回
+    /// - `Some(Vec<Vec2>)`: 找到的路径，按顺序包含所有世界坐标点
+    /// - `None`: 无法找到路径（起点或终点不可达）
+    ///
+    /// # 寻路特性
+    /// - 支持正交和对角线移动
+    /// - 自动处理不可达的目标点（寻找最近的可行走位置）
+    /// - 移动成本: 正交 10，对角线 14（基于 √2 ≈ 1.414 的几何关系）
+    /// - 启发式函数: 曼哈顿距离 × 10
+    pub fn find_path(&self, start: Vec2, goal: Vec2) -> Option<Vec<Vec2>> {
+        use pathfinding::prelude::astar;
+
+        // 将世界坐标转换为网格坐标
+        let start_grid = self.world_to_grid(start);
+        let goal_grid = self.world_to_grid(goal);
+
+        // 检查起点是否可行走，如果不可行走则直接返回 None
+        if !self.is_walkable(start_grid.x, start_grid.y) {
+            return None;
+        }
+
+        // 确定实际的目标位置
+        let actual_goal = if self.is_walkable(goal_grid.x, goal_grid.y) {
+            // 如果目标位置可行走，直接使用该位置
+            goal_grid
+        } else {
+            // 如果目标位置不可行走，寻找最近的可行走位置
+            self.find_nearest_walkable(goal_grid)?
+        };
+
+        // 调用 A* 算法进行寻路
+        let result = astar(
+            // 起始节点
+            &start_grid,
+            // 成本函数: 返回当前节点的所有邻居及其移动成本
+            |pos| {
+                let pos = *pos;
+                self.get_neighbors(pos).into_iter().map(move |n| {
+                    // 根据移动方向计算成本
+                    // 对角线移动: |dx| + |dy| = 2，成本 = 14（约 √2 × 10）
+                    // 正交移动: |dx| + |dy| = 1，成本 = 10
+                    let cost = if (n.x - pos.x).abs() + (n.y - pos.y).abs() == 2 {
+                        14u32
+                    } else {
+                        10u32
+                    };
+                    (n, cost)
+                })
+            },
+            // 启发式函数: 使用曼哈顿距离估算到目标的剩余成本
+            |pos| {
+                let dx = (pos.x - actual_goal.x).abs();
+                let dy = (pos.y - actual_goal.y).abs();
+                // 曼哈顿距离 × 10，与移动成本的尺度保持一致
+                ((dx + dy) * 10) as u32
+            },
+            // 目标判断函数: 检查是否到达目标位置
+            |pos| *pos == actual_goal,
+        );
+
+        // 将找到的路径从网格坐标转换回世界坐标
+        result.map(|(path, _)| {
+            path.into_iter()
+                .map(|pos| self.grid_to_world(pos.x, pos.y))
+                .collect()
+        })
+    }
+
+    /// 寻找距离给定位置最近的可行走网格位置
+    ///
+    /// # 算法说明
+    /// 使用"螺旋搜索"策略，从给定点开始，按半径逐步扩大搜索范围。
+    /// 搜索顺序：
+    /// - 半径 1: 3×3 区域（距离 1 的所有点）
+    /// - 半径 2: 5×5 区域的边缘点（距离 2 的点）
+    /// - ...
+    /// - 半径 9: 19×19 区域的边缘点
+    ///
+    /// # 参数
+    /// - `pos`: 起始网格位置
+    ///
+    /// # 返回
+    /// - `Some(IVec2)`: 找到的最近的可行走位置
+    /// - `None`: 在半径 9 范围内未找到可行走位置
+    ///
+    /// # 搜索限制
+    /// - 最大搜索半径: 9 个网格单位
+    /// - 搜索顺序: 按距离从小到大，确保找到的是最近位置
+    ///
+    /// # 使用场景
+    /// - 寻路时目标点在障碍物上，需要找到最近的可到达点
+    /// - 敌人 AI 寻找最近的攻击位置
+    pub fn find_nearest_walkable(&self, pos: IVec2) -> Option<IVec2> {
+        // 从半径 1 开始逐步扩大搜索范围，最多搜索到半径 9
+        for radius in 1i32..10 {
+            // 遍历当前半径内的所有位置（dx 和 dy 从 -radius 到 +radius）
+            for dx in -radius..=radius {
+                for dy in -radius..=radius {
+                    // 只检查当前半径的边缘点（避免重复检查内层已经检查过的点）
+                    // 边缘点满足条件: |dx| == radius 或 |dy| == radius
+                    if dx.abs() == radius || dy.abs() == radius {
+                        // 计算待检查的位置
+                        let check = IVec2::new(pos.x + dx, pos.y + dy);
+                        // 如果该位置可行走，立即返回（因为是按距离顺序搜索的）
+                        if self.is_walkable(check.x, check.y) {
+                            return Some(check);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 在搜索范围内未找到可行走位置
+        None
+    }
 }

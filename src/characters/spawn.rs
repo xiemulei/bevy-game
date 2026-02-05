@@ -7,6 +7,7 @@ use crate::characters::facing::Facing;
 use crate::characters::input::Player;
 use crate::characters::physics::Velocity;
 use crate::characters::state::CharacterState;
+use crate::collision::CollisionMap;
 use crate::combat::PlayerCombat;
 use crate::config::player::{PLAYER_SCALE, PLAYER_Z_POSITION};
 use bevy::prelude::*;
@@ -28,6 +29,9 @@ pub struct CharactersListResource {
     /// 角色列表资源的句柄
     pub handle: Handle<CharactersList>,
 }
+
+#[derive(Resource, Default, PartialEq, Eq)]
+pub struct PlayerSpawned(pub bool);
 
 /// 创建角色精灵图集布局
 ///
@@ -56,86 +60,102 @@ pub fn create_character_atlas_layout(
     ))
 }
 
-/// 生成玩家角色
-///
-/// 在游戏启动时创建玩家实体并加载角色配置
-pub fn spawn_player(
+fn get_valid_spawn_position(collision_map: &CollisionMap, desired_pos: Vec2) -> Vec2 {
+    let player_radius = 12.0;
+
+    if collision_map.is_circle_clear(desired_pos, player_radius) {
+        return desired_pos;
+    }
+
+    let grid_pos = collision_map.world_to_grid(desired_pos);
+    if let Some(walkable) = collision_map.find_nearest_walkable(grid_pos) {
+        let world_pos = collision_map.grid_to_world(walkable.x, walkable.y);
+        info!(
+            "Adjusted player spawn from {:?} to {:?} (was on obstacle)",
+            desired_pos, world_pos
+        );
+        return world_pos;
+    }
+
+    warn!(
+        "Could not find walkable spawn position near {:?}",
+        desired_pos
+    );
+    desired_pos
+}
+
+pub fn load_character_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut character_index: ResMut<CurrentCharacterIndex>,
 ) {
-    // 加载角色配置文件
     let characters_list_handle: Handle<CharactersList> =
         asset_server.load("characters/characters.ron");
-    // 将角色列表句柄作为资源插入
+
     commands.insert_resource(CharactersListResource {
         handle: characters_list_handle,
     });
-
-    // 初始化角色索引为 0
     character_index.index = 0;
 
-    // 生成玩家实体（初始只有基础组件，稍后初始化）
-    commands.spawn((
-        Player,
-        Transform::from_translation(Vec3::new(0.0, 0.0, PLAYER_Z_POSITION))
-            .with_scale(Vec3::splat(PLAYER_SCALE)),
-        Sprite::default(),
-    ));
+    info!("Character assets loading stared");
 }
 
-/// 初始化玩家角色
-///
-/// 当角色配置资源加载完成后，为玩家实体添加精灵、动画控制器等组件
-pub fn initialize_player_character(
+pub fn spawn_player_at_valid_position(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     characters_list: Res<Assets<CharactersList>>,
     character_index: Res<CurrentCharacterIndex>,
     characters_list_resource: Option<Res<CharactersListResource>>,
-    mut query: Query<Entity, (With<Player>, Without<AnimationController>)>,
+    collision_map: Option<Res<CollisionMap>>,
+    mut player_spawned: ResMut<PlayerSpawned>,
 ) {
-    // 等待角色列表资源可用
+    let Some(collision_map) = collision_map else {
+        return;
+    };
+
     let Some(characters_list_resource) = characters_list_resource else {
         return;
     };
 
-    // 查找尚未初始化的玩家实体
-    for entity in query.iter_mut() {
-        // 等待角色配置加载完成
-        let Some(characters_list) = characters_list.get(&characters_list_resource.handle) else {
-            continue;
-        };
-        // 检查索引是否有效
-        if character_index.index >= characters_list.characters.len() {
-            continue;
-        }
-        // 获取当前角色配置
-        let character_entry = &characters_list.characters[character_index.index];
-        // 加载角色纹理
-        let texture = asset_server.load(&character_entry.texture_path);
-        // 创建精灵图集布局
-        let layout = create_character_atlas_layout(&mut atlas_layouts, character_entry);
-        // 创建精灵
-        let sprite = Sprite::from_atlas_image(texture, TextureAtlas { layout, index: 0 });
+    let Some(characters_list) = characters_list.get(&characters_list_resource.handle) else {
+        return;
+    };
 
-        // 为玩家实体添加动画和角色组件
-        commands.entity(entity).insert((
-            AnimationController::default(),
-            CharacterState::default(),
-            Velocity::default(),
-            Facing::default(),
-            Collider::default(),
-            PlayerCombat::default(),
-            AnimationTimer(Timer::from_seconds(
-                DEFAULT_ANIMATION_FRAME_TIME,
-                TimerMode::Repeating,
-            )),
-            character_entry.clone(),
-            sprite,
-        ));
+    if character_index.index >= characters_list.characters.len() {
+        warn!("Invalid character index: {}", character_index.index);
+        return;
     }
+
+    let character_entry = &characters_list.characters[character_index.index];
+
+    let desired_pos = Vec2::new(0.0, 0.0);
+    let valid_pos = get_valid_spawn_position(&collision_map, desired_pos);
+
+    let texture = asset_server.load(&character_entry.texture_path);
+    let layout = create_character_atlas_layout(&mut atlas_layouts, character_entry);
+    let sprite = Sprite::from_atlas_image(texture, TextureAtlas { layout, index: 0 });
+
+    commands.spawn((
+        Player,
+        Transform::from_translation(Vec3::new(valid_pos.x, valid_pos.y, PLAYER_Z_POSITION))
+            .with_scale(Vec3::splat(PLAYER_SCALE)),
+        sprite,
+        AnimationController::default(),
+        CharacterState::default(),
+        Velocity::default(),
+        Facing::default(),
+        Collider::default(),
+        PlayerCombat::default(),
+        AnimationTimer(Timer::from_seconds(
+            DEFAULT_ANIMATION_FRAME_TIME,
+            TimerMode::Repeating,
+        )),
+        character_entry.clone(),
+    ));
+
+    player_spawned.0 = true;
+    info!("Player spawned at validated position {:?}", valid_pos);
 }
 
 /// 切换角色

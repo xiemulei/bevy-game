@@ -5,10 +5,10 @@ use bevy::prelude::*;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub enum PowerType {
     #[default]
-    Fire,    // 火焰
-    Arcane,  // 奥术
-    Shadow,  // 暗影
-    Poison,  // 剧毒
+    Fire, // 火焰
+    Arcane, // 奥术
+    Shadow, // 暗影
+    Poison, // 剧毒
 }
 
 /// 能力视觉效果配置 - 定义粒子的外观和行为
@@ -26,7 +26,7 @@ pub struct PowerVisuals {
 
 impl PowerType {
     /// 获取能力的视觉效果配置
-    pub fn visual(&self, direction: Vec3) -> PowerVisuals {
+    pub fn visuals(&self, direction: Vec3) -> PowerVisuals {
         match self {
             PowerType::Fire => Self::fire_visuals(direction),
             PowerType::Arcane => Self::arcane_visuals(direction),
